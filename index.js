@@ -14,6 +14,15 @@ async function run() {
   try {
     await client.connect();
 
+    const db = client.db("savorBookDB");
+    const recipesCollection = db.collection("recipes");
+
+    // get all recipes
+    app.get("/recipes", async (req, res) => {
+      const result = await recipesCollection.find().toArray();
+      res.send(result);
+    });
+
     // send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
