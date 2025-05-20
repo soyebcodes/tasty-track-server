@@ -43,7 +43,7 @@ async function run() {
       res.send(recipe);
     });
 
-    // get recipe byt top by likes
+    // get top recipe by likes
    app.get("/top-recipes", async (req, res) => {
   try {
     const topRecipes = await recipesCollection
@@ -57,6 +57,26 @@ async function run() {
     res.status(500).send({ error: "Failed to fetch top recipes" });
   }
 });
+
+// get recipe by user email
+app.get("/my-recipes", async (req, res) => {
+  const userEmail = req.query.email;
+
+  if (!userEmail) {
+    return res.status(400).send({ error: "User email is required" });
+  }
+
+  try {
+    const userRecipes = await recipesCollection
+      .find({ authorEmail: userEmail }) 
+      .toArray();
+
+    res.send(userRecipes);
+  } catch (err) {
+    res.status(500).send({ error: "Failed to fetch user's recipes" });
+  }
+});
+
 
   
 
