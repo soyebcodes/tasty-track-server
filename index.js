@@ -77,6 +77,28 @@ app.get("/my-recipes", async (req, res) => {
   }
 });
 
+// delete a recipe
+app.delete("/my-recipes/:id", async (req, res) => {
+  const id = req.params.id;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send({ error: "Invalid Id format" });
+  }
+
+  try {
+    const result = await recipesCollection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).send({ error: "Recipe not found" });
+    }
+
+    res.send({ message: "Recipe deleted successfully!" });
+  } catch (err) {
+    res.status(500).send({ error: "Failed to delete recipe" });
+  }
+});
+
+
 
 // update a recipe
 app.put("/my-recipes/:id", async (req, res) => {
