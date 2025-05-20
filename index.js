@@ -23,10 +23,10 @@ async function run() {
       res.send(result);
     });
 
-      // add a new recipe
+    // add a new recipe
     app.post("/add-recipe", async (req, res) => {
       const recipeData = req.body;
-      if(!recipeData.likeCount || typeof recipeData.likeCount !== "number") {
+      if (!recipeData.likeCount || typeof recipeData.likeCount !== "number") {
         recipeData.likeCount = 0;
       }
       const result = await recipesCollection.insertOne(recipeData);
@@ -36,106 +36,118 @@ async function run() {
     // get a single recipe
     app.get("/recipes/:id", async (req, res) => {
       const id = req.params.id;
-       if (!ObjectId.isValid(id)) {
-    return res.status(400).send({ error: "Invalid ID format" });
-  }
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid ID format" });
+      }
       const recipe = await recipesCollection.findOne({ _id: new ObjectId(id) });
       res.send(recipe);
     });
 
     // get top recipe by likes
-   app.get("/top-recipes", async (req, res) => {
-  try {
-    const topRecipes = await recipesCollection
-      .find()
-      .sort({ likeCount: -1 })
-      .limit(6)
-      .toArray();
+    app.get("/top-recipes", async (req, res) => {
+      try {
+        const topRecipes = await recipesCollection
+          .find()
+          .sort({ likeCount: -1 })
+          .limit(6)
+          .toArray();
 
-    res.send(topRecipes);
-  } catch (err) {
-    res.status(500).send({ error: "Failed to fetch top recipes" });
-  }
-});
-
-// get recipe by user email
-app.get("/my-recipes", async (req, res) => {
-  const userEmail = req.query.email;
-
-  if (!userEmail) {
-    return res.status(400).send({ error: "User email is required" });
-  }
-
-  try {
-    const userRecipes = await recipesCollection
-      .find({ authorEmail: userEmail }) 
-      .toArray();
-
-    res.send(userRecipes);
-  } catch (err) {
-    res.status(500).send({ error: "Failed to fetch user's recipes" });
-  }
-});
-
-// delete a recipe
-app.delete("/my-recipes/:id", async (req, res) => {
-  const id = req.params.id;
-
-  if (!ObjectId.isValid(id)) {
-    return res.status(400).send({ error: "Invalid Id format" });
-  }
-
-  try {
-    const result = await recipesCollection.deleteOne({ _id: new ObjectId(id) });
-
-    if (result.deletedCount === 0) {
-      return res.status(404).send({ error: "Recipe not found" });
-    }
-
-    res.send({ message: "Recipe deleted successfully!" });
-  } catch (err) {
-    res.status(500).send({ error: "Failed to delete recipe" });
-  }
-});
-
-
-
-// update a recipe
-app.put("/my-recipes/:id", async (req, res) => {
-  const id = req.params.id;
-  const updatedData = req.body;
-
-  if (!ObjectId.isValid(id)) {
-    return res.status(400).send({ error: "Invalid ID format" });
-  }
-
-  try {
-    const result = await recipesCollection.updateOne(
-      { _id: new ObjectId(id) },
-      {
-        $set: {
-          image: updatedData.image,
-          title: updatedData.title,
-          ingredients: updatedData.ingredients,
-          instructions: updatedData.instructions,
-          cuisineType: updatedData.cuisineType,
-          preparationTime: updatedData.preparationTime,
-          categories: updatedData.categories,
-        },
+        res.send(topRecipes);
+      } catch (err) {
+        res.status(500).send({ error: "Failed to fetch top recipes" });
       }
-    );
+    });
 
-    if (result.matchedCount === 0) {
-      return res.status(404).send({ error: "Recipe not found" });
-    }
+    // get recipe by user email
+    app.get("/my-recipes", async (req, res) => {
+      const userEmail = req.query.email;
 
-    res.send({ message: "Recipe updated successfully" });
-  } catch (err) {
-    res.status(500).send({ error: "failed to update recipe" });
-  }
-});
+      if (!userEmail) {
+        return res.status(400).send({ error: "User email is required" });
+      }
 
-  
+      try {
+        const userRecipes = await recipesCollection
+          .find({ authorEmail: userEmail })
+          .toArray();
+
+        res.send(userRecipes);
+      } catch (err) {
+        res.status(500).send({ error: "Failed to fetch user's recipes" });
+      }
+    });
+
+    // delete a recipe
+    app.delete("/my-recipes/:id", async (req, res) => {
+      const id = req.params.id;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid Id format" });
+      }
+
+      try {
+        const result = await recipesCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ error: "Recipe not found" });
+        }
+
+        res.send({ message: "Recipe deleted successfully!" });
+      } catch (err) {
+        res.status(500).send({ error: "Failed to delete recipe" });
+      }
+    });
+
+    // update a recipe
+    app.put("/my-recipes/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid ID format" });
+      }
+
+      try {
+        const result = await recipesCollection.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              image: updatedData.image,
+              title: updatedData.title,
+              ingredients: updatedData.ingredients,
+              instructions: updatedData.instructions,
+              cuisineType: updatedData.cuisineType,
+              preparationTime: updatedData.preparationTime,
+              categories: updatedData.categories,
+            },
+          }
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ error: "Recipe not found" });
+        }
+
+        res.send({ message: "Recipe updated successfully" });
+      } catch (err) {
+        res.status(500).send({ error: "failed to update recipe" });
+      }
+    });
+
+    // handle like count
+    app.patch("/recipes/like/:id", async (req, res) => {
+      const id = req.params.id;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid ID format" });
+      }
+
+      const result = await recipesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $inc: { likeCount: 1 } }
+      );
+      res.send(result);
+    });
 
     // send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
