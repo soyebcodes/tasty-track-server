@@ -23,6 +23,14 @@ async function run() {
       res.send(result);
     });
 
+    // add a new recipe
+     app.post("/recipes", async (req, res) => {
+            const newRecipe = req.body;
+            newRecipe.likeCount = 0; // Default like count
+            const result = await recipesCollection.insertOne(newRecipe);
+            res.send(result);
+        });
+
     // send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
