@@ -23,20 +23,42 @@ async function run() {
       res.send(result);
     });
 
-    // get a single recipe
-     app.get("/recipes/:id", async (req, res) => {
-            const id = req.params.id;
-            const recipe = await recipesCollection.findOne({ _id: new ObjectId(id) });
-            res.send(recipe);
-        });
+      // add a new recipe
+    app.post("/add-recipe", async (req, res) => {
+      const recipeData = req.body;
+      if(!recipeData.likeCount || typeof recipeData.likeCount !== "number") {
+        recipeData.likeCount = 0;
+      }
+      const result = await recipesCollection.insertOne(recipeData);
+      res.send(result);
+    });
 
-    // add a new recipe
-     app.post("/recipes", async (req, res) => {
-            const newRecipe = req.body;
-            newRecipe.likeCount = 0; // Default like count
-            const result = await recipesCollection.insertOne(newRecipe);
-            res.send(result);
-        });
+    // get a single recipe
+    app.get("/recipes/:id", async (req, res) => {
+      const id = req.params.id;
+       if (!ObjectId.isValid(id)) {
+    return res.status(400).send({ error: "Invalid ID format" });
+  }
+      const recipe = await recipesCollection.findOne({ _id: new ObjectId(id) });
+      res.send(recipe);
+    });
+
+    // get recipe byt top by likes
+   app.get("/top-recipes", async (req, res) => {
+  try {
+    const topRecipes = await recipesCollection
+      .find()
+      .sort({ likeCount: -1 })
+      .limit(6)
+      .toArray();
+
+    res.send(topRecipes);
+  } catch (err) {
+    res.status(500).send({ error: "Failed to fetch top recipes" });
+  }
+});
+
+  
 
     // send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
