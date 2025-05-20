@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -22,6 +22,13 @@ async function run() {
       const result = await recipesCollection.find().toArray();
       res.send(result);
     });
+
+    // get a single recipe
+     app.get("/recipes/:id", async (req, res) => {
+            const id = req.params.id;
+            const recipe = await recipesCollection.findOne({ _id: new ObjectId(id) });
+            res.send(recipe);
+        });
 
     // add a new recipe
      app.post("/recipes", async (req, res) => {
