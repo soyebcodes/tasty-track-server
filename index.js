@@ -78,6 +78,41 @@ app.get("/my-recipes", async (req, res) => {
 });
 
 
+// update a recipe
+app.put("/my-recipes/:id", async (req, res) => {
+  const id = req.params.id;
+  const updatedData = req.body;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send({ error: "Invalid ID format" });
+  }
+
+  try {
+    const result = await recipesCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          image: updatedData.image,
+          title: updatedData.title,
+          ingredients: updatedData.ingredients,
+          instructions: updatedData.instructions,
+          cuisineType: updatedData.cuisineType,
+          preparationTime: updatedData.preparationTime,
+          categories: updatedData.categories,
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).send({ error: "Recipe not found" });
+    }
+
+    res.send({ message: "Recipe updated successfully" });
+  } catch (err) {
+    res.status(500).send({ error: "failed to update recipe" });
+  }
+});
+
   
 
     // send a ping to confirm a successful connection
